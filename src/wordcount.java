@@ -16,16 +16,25 @@ public class wordcount {
     }
 
     private void start(String[] args) {
-        StringBuilder answer = new StringBuilder();
         HashMap<String,Integer> words = new HashMap<>();
         String str = readFile(args[0]);
-        String pattern = "[a-zA-Z][a-zA-Z\\-]*";
-        Pattern r = Pattern.compile(pattern);
-        Matcher m = r.matcher(str);
-        while (m.find()) {
-            String word = str.substring(m.start(),m.end()).toLowerCase();
-            words.put(word, words.getOrDefault(word, 0) + 1);
+        {
+            int state = 0;
+            int beginIndex = -1;
+            for (int i = 0; i <= str.length(); ++i) {
+                char ch = i == str.length() ? ' ' : str.charAt(i);
+                boolean isWordChar = ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '-';
+                if (state == 0 && isWordChar && ch != '-') {
+                    beginIndex = i;
+                    state = 1;
+                } else if (state == 1 && !isWordChar) {
+                    String word = str.substring(beginIndex, i).toLowerCase();
+                    words.put(word, words.getOrDefault(word, 0) + 1);
+                    state = 0;
+                }
+            }
         }
+
         List<Map.Entry<String, Integer>> list = new ArrayList<>();
         list.addAll(words.entrySet());
         list.sort((lhs, rhs) -> {
@@ -33,11 +42,20 @@ public class wordcount {
             if (cmp != 0) return cmp;
             else return lhs.getKey().compareTo(rhs.getKey());
         });
-        for (int i = 0 ; i < list.size() - 1 && i < 99 ; ++ i) {
-            answer.append(list.get(i).getKey()).append(' ').append(list.get(i).getValue()).append('\n');
+
+        try (FileWriter fout = new FileWriter("result.txt")) {
+            int maxsz = Math.min(list.size(), 100);
+            for (int i = 0 ; i < maxsz; ++ i) {
+                Map.Entry<String, Integer> item = list.get(i);
+                fout.write(item.getKey());
+                fout.write(' ');
+                fout.write(item.getValue().toString());
+                if (i != maxsz - 1)
+                    fout.write('\n');
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
-        answer.append(list.get(list.size()-1).getKey()).append(' ').append(list.get(list.size()-1).getValue());
-        writeFile(answer.toString());
     }
 
     private String readFile(String path) { // 读文件
@@ -49,12 +67,4 @@ public class wordcount {
         }
     }
 
-    private void writeFile(String answer) {
-        try (FileWriter fout = new FileWriter("result.txt")) {
-            fout.append(answer);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-        return;
-    }
 }
