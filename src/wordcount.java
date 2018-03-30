@@ -7,7 +7,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class wordcount {
-    public static void main(String[] args) { new wordcount().start(args); }
+    public static void main(String[] args) {
+        long t1 = System.currentTimeMillis();
+        new wordcount().start(args);
+        long t2 = System.currentTimeMillis();
+        long dt = t2 - t1;
+        System.out.println(("Elapsed " + dt + "ms"));
+    }
 
     private void start(String[] args) {
         StringBuilder answer = new StringBuilder();
